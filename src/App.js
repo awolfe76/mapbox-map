@@ -17,27 +17,6 @@ const App = () => {
       center: [-94.3902, 35.3937]
     })
 
-    // colors
-    const blue = 'blue'
-    const orange = 'orange'
-    const green = 'green'
-    const brown = 'brown'
-    const slategray = 'slategray'
-    const white = 'white'
-    const red = 'red'
-    const black = 'black'
-    const yellow = 'yellow'
-    const violet = 'violet'
-    const rose = 'mistyrose'
-    const aqua = 'aqua'
-    const spanColor = '#800080'
-    const tapColor = '#bababa' //'#c4c4c4'
-    const spanAerial = '#551a8b' //purple
-    const spanUnder = '#FFA500'
-    const seqColor = '#A9A9A9' //'#FFA500'
-    const strandTextColor = '#545454' //'#FFA500'
-    const strandLineColor = '#dcdcdc' //'#FFA500'
-
     // cable - lines
     const cableUrl = 'mapbox://conexon-design.a13fpb9r'
     const cableSourceLayer = 'avecc_cable-4f5knl'
