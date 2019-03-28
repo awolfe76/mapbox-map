@@ -17,14 +17,14 @@ const App = () => {
       center: [-94.3902, 35.3937]
     })
 
-    // cable - lines
-    const cableUrl = 'mapbox://conexon-design.a13fpb9r'
-    const cableSourceLayer = 'avecc_cable-4f5knl'
-
     map.on('load', function() {
       map.on('zoom', () => {
         //console.log(map.queryRenderedFeatures({ layers: ['tubes'] }))
       })
+
+      // cables (lines) and strand counts
+      const cableUrl = 'mapbox://conexon-design.a13fpb9r'
+      const cableSourceLayer = 'avecc_cable-4f5knl'
 
       map.addLayer({
         id: 'cable',
@@ -53,10 +53,37 @@ const App = () => {
         }
       })
 
-      // splice cans - bowties
+      // cable-strand count
+      map.addLayer({
+        id: 'cable-strand-count',
+        type: 'symbol',
+        source: {
+          type: 'vector',
+          url: cableUrl
+        },
+        'source-layer': cableSourceLayer,
+        paint: {
+          'text-color': 'black'
+        },
+        layout: {
+          'text-field': '{cableSize}',
+          'symbol-placement': 'line',
+          'text-allow-overlap': true,
+          //'text-offset': [0, -1],
+          'text-justify': 'center',
+          'text-rotation-alignment': 'viewport',
+          'text-size': {
+            base: 1,
+            stops: [[12, 8], [13, 9], [14, 10], [15, 12], [16, 14]]
+          }
+        }
+      })
+
+      // splice cans (bowties) and substations
       const splicePointUrl = 'mapbox://conexon-design.10b9jbcd'
       const splicePointSourceLayer = 'avecc_splicepoints-4eofp4'
 
+      // splice cans
       map.addLayer({
         id: 'spliceCan',
         type: 'symbol',
@@ -75,12 +102,67 @@ const App = () => {
         }
       })
 
+      // substations
+      map.addLayer({
+        id: 'substations',
+        type: 'symbol',
+        source: {
+          type: 'vector',
+          url: splicePointUrl
+        },
+        'source-layer': splicePointSourceLayer,
+        filter: ['all', ['==', 'Subtype', 4]],
+        layout: {
+          'icon-image': 'black-square-15',
+          'icon-allow-overlap': true,
+          'icon-size': {
+            base: 0.5,
+            stops: [[12, 0.75], [13, 1.25], [14, 1.75], [15, 2.25], [16, 3.75]]
+          }
+        }
+      })
+
       // taps and strands
       const tapURL = 'mapbox://conexon-design.21pxqp4z'
       const tapSourceLayer = 'avecc_equipmentdisp-466p7e'
 
+      // tubes
+      // symbols are used to represent tubes based on the tap_ports value
+      // 2 = circle
+      // 4 = square
+      // 8 = octagon
       map.addLayer({
         id: 'tubes',
+        type: 'symbol',
+        source: {
+          type: 'vector',
+          url: tapURL
+        },
+        'source-layer': tapSourceLayer,
+        layout: {
+          'icon-allow-overlap': true,
+          'icon-image': [
+            'step',
+            ['get', 'tap_ports'],
+            ['concat', ['get', 'tubes'], '-circle-15'], // default
+            2,
+            ['concat', ['get', 'tubes'], '-circle-15'],
+            4,
+            ['concat', ['get', 'tubes'], '-square-15'],
+            8,
+            ['concat', ['get', 'tubes'], '-octagon-15']
+          ],
+          'icon-size': {
+            base: 0.5,
+            stops: [[12, 0.5], [13, 1], [14, 1.25], [15, 1.75], [16, 2]]
+          }
+        }
+      })
+
+      // strands
+      // stands are always circles
+      map.addLayer({
+        id: 'stands',
         type: 'circle',
         source: {
           type: 'vector',
@@ -88,22 +170,6 @@ const App = () => {
         },
         'source-layer': tapSourceLayer,
         paint: {
-          'circle-radius': {
-            base: 2,
-            stops: [[12, 2], [13, 6], [14, 8], [15, 9], [16, 12]]
-          },
-          'circle-stroke-width': 3,
-          // slategray and mistyrose come in a slate and rose
-          // so we have logic to render the correct HTML 'named' color
-          // otherwise just output the property color
-          'circle-stroke-color': [
-            'case',
-            ['==', ['get', 'tubes'], 'slate'],
-            'slategray',
-            ['==', ['get', 'tubes'], 'rose'],
-            'mistyrose',
-            ['get', 'tubes']
-          ],
           'circle-color': [
             'case',
             ['==', ['get', 'strands'], 'slate'],
@@ -111,9 +177,16 @@ const App = () => {
             ['==', ['get', 'strands'], 'rose'],
             'mistyrose',
             ['get', 'strands']
-          ]
+          ],
+          'circle-radius': {
+            base: 0.9,
+            stops: [[12, 1], [13, 4], [14, 6], [15, 7], [16, 10]]
+          }
         }
       })
+
+      // add zoom and rotation controls to the map.
+      map.addControl(new mapboxgl.NavigationControl())
     })
 
     return function cleanUp() {
