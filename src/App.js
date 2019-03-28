@@ -18,21 +18,19 @@ const App = () => {
     })
 
     map.on('load', function() {
-      map.on('zoom', () => {
-        //console.log(map.queryRenderedFeatures({ layers: ['tubes'] }))
+      // cables and strand counts
+      map.addSource('cables', {
+        type: 'vector',
+        url: 'mapbox://conexon-design.a13fpb9r'
       })
 
-      // cables (lines) and strand counts
-      const cableUrl = 'mapbox://conexon-design.a13fpb9r'
       const cableSourceLayer = 'avecc_cable-4f5knl'
 
+      // cables (lines)
       map.addLayer({
-        id: 'cable',
+        id: 'cables',
         type: 'line',
-        source: {
-          type: 'vector',
-          url: cableUrl
-        },
+        source: 'cables',
         'source-layer': cableSourceLayer,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
@@ -48,19 +46,16 @@ const App = () => {
           'line-color': {
             property: 'class',
             type: 'categorical',
-            stops: [['A', 'purple'], ['U', 'orange']]
+            stops: [['A', 'blue'], ['U', 'brown']]
           }
         }
       })
 
-      // cable-strand count
+      // cable-strand count (text)
       map.addLayer({
-        id: 'cable-strand-count',
+        id: 'cableStrandCounts',
         type: 'symbol',
-        source: {
-          type: 'vector',
-          url: cableUrl
-        },
+        source: 'cables',
         'source-layer': cableSourceLayer,
         paint: {
           'text-color': 'black'
@@ -69,7 +64,6 @@ const App = () => {
           'text-field': '{cableSize}',
           'symbol-placement': 'line',
           'text-allow-overlap': true,
-          //'text-offset': [0, -1],
           'text-justify': 'center',
           'text-rotation-alignment': 'viewport',
           'text-size': {
@@ -79,19 +73,20 @@ const App = () => {
         }
       })
 
-      // splice cans (bowties) and substations
-      const splicePointUrl = 'mapbox://conexon-design.10b9jbcd'
-      const splicePointSourceLayer = 'avecc_splicepoints-4eofp4'
+      // splice cans and substations
+      map.addSource('splicePointsAndSubstations', {
+        type: 'vector',
+        url: 'mapbox://conexon-design.10b9jbcd'
+      })
 
-      // splice cans
+      const spliceCansAndSubtationsSourceLayer = 'avecc_splicepoints-4eofp4'
+
+      // splice cans (bowtie symbol)
       map.addLayer({
-        id: 'spliceCan',
+        id: 'spliceCans',
         type: 'symbol',
-        source: {
-          type: 'vector',
-          url: splicePointUrl
-        },
-        'source-layer': splicePointSourceLayer,
+        source: 'splicePointsAndSubstations',
+        'source-layer': spliceCansAndSubtationsSourceLayer,
         filter: ['all', ['==', 'Subtype', 1]],
         layout: {
           'icon-image': 'blue-bowtie-15',
@@ -102,15 +97,12 @@ const App = () => {
         }
       })
 
-      // substations
+      // substations (black squares)
       map.addLayer({
         id: 'substations',
         type: 'symbol',
-        source: {
-          type: 'vector',
-          url: splicePointUrl
-        },
-        'source-layer': splicePointSourceLayer,
+        source: 'splicePointsAndSubstations',
+        'source-layer': spliceCansAndSubtationsSourceLayer,
         filter: ['all', ['==', 'Subtype', 4]],
         layout: {
           'icon-image': 'black-square-15',
@@ -122,11 +114,15 @@ const App = () => {
         }
       })
 
-      // taps and strands
-      const tapURL = 'mapbox://conexon-design.21pxqp4z'
-      const tapSourceLayer = 'avecc_equipmentdisp-466p7e'
+      // tubes and strands
+      map.addSource('tubesAndStrands', {
+        type: 'vector',
+        url: 'mapbox://conexon-design.21pxqp4z'
+      })
 
-      // tubes
+      const tubesAndStrandsSourceLayer = 'avecc_equipmentdisp-466p7e'
+
+      // tubes (symbols)
       // symbols are used to represent tubes based on the tap_ports value
       // 2 = circle
       // 4 = square
@@ -134,14 +130,13 @@ const App = () => {
       map.addLayer({
         id: 'tubes',
         type: 'symbol',
-        source: {
-          type: 'vector',
-          url: tapURL
-        },
-        'source-layer': tapSourceLayer,
+        source: 'tubesAndStrands',
+        'source-layer': tubesAndStrandsSourceLayer,
         layout: {
           'icon-allow-overlap': true,
           'icon-image': [
+            // get the tubes color to use the correct image
+            // eg blue-circle-15 or rose-octagon-15
             'step',
             ['get', 'tap_ports'],
             ['concat', ['get', 'tubes'], '-circle-15'], // default
@@ -159,18 +154,16 @@ const App = () => {
         }
       })
 
-      // strands
-      // stands are always circles
+      // strands (circles)
       map.addLayer({
         id: 'stands',
         type: 'circle',
-        source: {
-          type: 'vector',
-          url: tapURL
-        },
-        'source-layer': tapSourceLayer,
+        source: 'tubesAndStrands',
+        'source-layer': tubesAndStrandsSourceLayer,
         paint: {
           'circle-color': [
+            // most colors translate to HTML named colors
+            // slate and rose do not, so we convert them
             'case',
             ['==', ['get', 'strands'], 'slate'],
             'slategray',
@@ -189,6 +182,7 @@ const App = () => {
       map.addControl(new mapboxgl.NavigationControl())
     })
 
+    // remove the map when component unmounts
     return function cleanUp() {
       map.remove()
     }
